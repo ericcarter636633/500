@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>PayPal Transaction Simulation Enhanced</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    margin: 0; padding: 0;
+    background: #fff;
+    color: #333;
+  }
+  .page {
+    display: none;
+    padding: 1em;
+    max-width: 480px;
+    margin: 0 auto;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+  }
+  .page.active {
+    display: block;
+    opacity: 1;
+    transform: translateY(0);
+  }
+  .header {
+    background: #003087;
+    color: white;
+    padding: 10px;
+    font-weight: bold;
+    font-size: 1.2em;
+    display: flex;
+    align-items: center;
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.16);
+  }
+  .header img {
+    width: 24px;
+    height: 24px;
+    margin-right: 8px;
+  }
+  .highlight-blue {
+    background-color: #d7eaff;
+    padding: 1em;
+    border-left: 5px solid #0070ba;
+    margin: 1em 0;
+    animation: slideInLeft 0.8s ease forwards;
+  }
+  @keyframes slideInLeft {
+    from {opacity: 0; transform: translateX(-25px);}
+    to {opacity: 1; transform: translateX(0);}
+  }
+  .section-box {
+    border: 1px solid #ccc;
+    padding: 1em;
+    margin-bottom: 1em;
+    border-radius: 6px;
+    animation: fadeInUp 0.8s ease forwards;
+  }
+  .amount {
+    font-size: 2em;
+    font-weight: bold;
+    color: #003087;
+  }
+  .buffer-container {
+    border: 1px solid #f0db99;
+    background: #fff9db;
+    border-radius: 6px;
+    padding: 1em;
+    text-align: center;
+    font-weight: bold;
+    font-size: 1em;
+    color: #333;
+    animation: fadeIn 0.7s ease forwards;
+  }
+  @keyframes fadeIn {
+    from {opacity: 0;}
+    to {opacity: 1;}
+  }
+  @keyframes fadeInUp {
+    from {opacity: 0; transform: translateY(15px);}
+    to {opacity: 1; transform: translateY(0);}
+  }
+
+  /* Improved Blue buffering circle animation for page 1 */
+  .buffer-circle {
+    margin: 0 auto 0.5em;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 6px solid #e0e0e0;
+    border-top-color: #003087;
+    animation: spin 2.1s linear forwards;
+  }
+  @keyframes spin {
+    from {transform: rotate(0deg);}
+    to {transform: rotate(360deg);}
+  }
+
+  /* Page 2: Green buffering circle and tick animations */
+  .green-buffer-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 2em 0;
+  }
+
+  /* The green buffering circle with stroke animation */
+  svg.green-spinner {
+    width: 80px;
+    height: 80px;
+    transform-origin: center;
+    animation: spinGreen 1.6s linear forwards;
+  }
+  @keyframes spinGreen {
+    from {transform: rotate(0deg);}
+    to {transform: rotate(360deg);}
+  }
+
+  /* Circle background */
+  svg.green-spinner circle.bg {
+    fill: none;
+    stroke: #e0e0e0;
+    stroke-width: 6;
+  }
+  /* Circle foreground - animated stroke dash offset */
+  svg.green-spinner circle.fg {
+    fill: none;
+    stroke: #28a745;
+    stroke-width: 6;
+    stroke-linecap: round;
+    stroke-dasharray: 125.6; /* circumference for r=20 */
+    stroke-dashoffset: 125.6;
+    animation: drawCircle 1.6s linear forwards;
+  }
+  @keyframes drawCircle {
+    to {stroke-dashoffset: 0;}
+  }
+
+  /* Checkmark path */
+  svg.green-spinner path.check {
+    fill: none;
+    stroke: #28a745;
+    stroke-width: 6;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-dasharray: 50;
+    stroke-dashoffset: 50;
+    animation: drawCheck 0.5s ease forwards;
+    animation-delay: 1.6s;
+  }
+  @keyframes drawCheck {
+    to {stroke-dashoffset: 0;}
+  }
+
+  /* Text below check animation */
+  .transaction-completed-text {
+    color: #28a745;
+    font-weight: 700;
+    font-size: 1.3em;
+    margin-top: 15px;
+    opacity: 0;
+    animation: fadeInText 0.7s ease forwards;
+    animation-delay: 2.1s;
+  }
+  @keyframes fadeInText {
+    to {opacity: 1;}
+  }
+  
+  /* Footer links */
+  .footer-links {
+    margin-top: 2em;
+    text-align: center;
+    font-size: 0.9em;
+  }
+  .footer-links a {
+    margin: 0 0.5em;
+    color: #0070ba;
+    text-decoration: none;
+  }
+  .footer-links a:hover {
+    text-decoration: underline;
+  }
+  .footer-text {
+    margin-top: 0.5em;
+    color: #555;
+    font-size: 0.8em;
+  }
+  /* Page 3 style */
+  .table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 1em;
+  }
+  .table th, .table td {
+    text-align: left;
+    padding: 0.6em;
+    border-bottom: 1px solid #ddd;
+  }
+  .note {
+    background: #fff9db;
+    padding: 1em;
+    border-radius: 6px;
+    margin-bottom: 1em;
+  }
+  .security {
+    background: #f6dbdb;
+    padding: 1em;
+    border-radius: 6px;
+    color: #721c24;
+    margin-bottom: 1em;
+  }
+  .support {
+    background: #d7eaff;
+    padding: 1em;
+    font-weight: bold;
+    border-radius: 6px;
+    color: #003087;
+    margin-bottom: 1em;
+  }
+  .download-btn {
+    background-color: #0070ba;
+    color: white;
+    padding: 0.8em 2em;
+    border-radius: 24px;
+    text-align: center;
+    display: inline-block;
+    cursor: pointer;
+    user-select: none;
+    font-weight: bold;
+    border: none;
+    transition: background-color 0.3s ease;
+  }
+  .download-btn:hover {
+    background-color: #005b8a;
+  }
+
+</style>
+</head>
+<body>
+
+<!-- Page 1: Processing with blue buffering circle -->
+<div id="page1" class="page active" aria-live="polite">
+  <div class="header" role="banner">
+    <img src="https://upload.wikimedia.org/wikipedia/commons/b/b5/PayPal.svg" alt="PayPal logo" />
+    <div>PayPal Processing Transaction</div>
+  </div>
+  <p><strong>+1 (707) 660-3702</strong><br />Just paypalsupport.com</p>
+  <div class="highlight-blue" role="region" aria-label="Purchase protection info">
+    You're protected by PayPal Purchase Protection. All transactions are monitored 24/7.<br />
+    <strong><a href="tel:+17076603702" style="color:#0070ba; text-decoration:none;">Help Line Number: +1 (707) 660-3702</a></strong>
+  </div>
+  <div class="section-box" aria-label="Sending amount details">
+    <strong>Securely sending $499.09 USD to Apple Gift Card</strong>
+    <div class="amount">$499.09 USD</div>
+    Apple Gift Card
+  </div>
+  <div class="buffer-container" role="alert" aria-live="assertive" aria-busy="true">
+    <div class="buffer-circle" aria-label="Loading animation"></div>
+    Please do not close this window. Your transaction is being processed with enhanced security.
+  </div>
+  <div class="footer-links" aria-label="Footer navigation links">
+    <a href="#">Help Center</a>
+    <a href="#">Privacy Policy</a>
+    <a href="#">Terms & Conditions</a>
+    <div class="footer-text">© PayPal 2025. All rights reserved.</div>
+  </div>
+</div>
+
+<!-- Page 2: Green buffering circle + full green tick -->
+<div id="page2" class="page" aria-live="polite" aria-busy="true" aria-label="Transaction status">
+  <div class="header" role="banner">
+    <img src="https://upload.wikimedia.org/wikipedia/commons/b/b5/PayPal.svg" alt="PayPal logo" />
+    <div>PayPal Transaction Status</div>
+  </div>
+  <div class="highlight-blue" role="region" aria-label="Purchase protection info">
+    You're protected by PayPal Purchase Protection. All transactions are monitored 24/7.<br />
+    <strong><a href="tel:+17076603702" style="color:#0070ba; text-decoration:none;">Help Line Number: +1 (707) 660-3702</a></strong>
+  </div>
+  <div class="green-buffer-container" aria-hidden="false">
+    <svg class="green-spinner" viewBox="0 0 50 50" role="img" aria-label="Transaction progress">
+      <circle class="bg" cx="25" cy="25" r="20"></circle>
+      <circle class="fg" cx="25" cy="25" r="20"></circle>
+      <path class="check" d="M16 27 L22 33 L34 19" />
+    </svg>
+  </div>
+  <div class="transaction-completed-text" aria-live="polite">
+    Transaction Completed
+  </div>
+  <div style="text-align:center; margin-top: 15px; font-weight: 400; color: #333;">
+    Your payment has been successfully sent. A receipt is now being generated.
+  </div>
+  <div class="footer-links" aria-label="Footer navigation links">
+    <a href="#">Help Center</a>
+    <a href="#">Privacy Policy</a>
+    <a href="#">Terms & Conditions</a>
+    <div class="footer-text">© PayPal 2025. All rights reserved.</div>
+  </div>
+</div>
+
+<!-- Page 3: Payment receipt -->
+<div id="page3" class="page" aria-live="polite" aria-label="Payment receipt">
+  <div class="header" role="banner">
+    <img src="https://upload.wikimedia.org/wikipedia/commons/b/b5/PayPal.svg" alt="PayPal logo" />
+    <div>PayPal Payment Receipt</div>
+  </div>
+  <h3 style="color:#003087;">Transaction Details</h3>
+  <table class="table" role="table" aria-label="Transaction details table">
+    <tbody>
+      <tr><th>Transaction ID</th><td>TRX-20251016-12345</td></tr>
+      <tr><th>Date</th><td id="currentDate"></td></tr>
+      <tr><th>Status</th><td style="color:#28a745; font-weight:bold;">Completed</td></tr>
+      <tr><th>Paid To</th><td>Apple Gift Card</td></tr>
+      <tr><th>Payment Method</th><td>PayPal</td></tr>
+      <tr><th>Amount</th><td style="color:#003087; font-weight:bold;">$499.09 USD</td></tr>
+    </tbody>
+  </table>
+
+  <div class="note"><strong>Note:</strong> This receipt is for your records. The transaction may take a short time to appear on your bank statement.</div>
+  <div class="security"><strong>Security:</strong> Never share your password, OTP, or full card details with anyone. If you suspect unauthorized activity, contact the merchant or your bank.</div>
+  <div class="support">PayPal Support: +1 (707) 660-3702</div>
+  <button class="download-btn" aria-label="Download receipt as PDF" onclick="alert('Downloading Receipt PDF...')">&#128229; Download Receipt (PDF)</button>
+</div>
+
+<script>
+  // Set current date in US format for page3
+  function formatDateToUS(date) {
+    const options = { year: 'numeric', month: 'long', day: 'numeric' };
+    return date.toLocaleDateString('en-US', options);
+  }
+  document.getElementById('currentDate').textContent = formatDateToUS(new Date());
+
+  // Page transition with fade and slide + animation timing
+  function showPage(id) {
+    document.querySelectorAll('.page').forEach(p => {
+      if (p.id === id) {
+        p.classList.add('active');
+      } else {
+        p.classList.remove('active');
+      }
+    });
+  }
+
+  // Timing & sequencing
+  // Page 1: 2.1s spin buffering
+  // Page 2: 1.6s green buffering circle + 0.5s tick draw + 0.7s text fade
+  // Total ~2.8s on page 2
+  setTimeout(() => {
+    showPage('page2');
+    // After 2.8s on page2 show page3
+    setTimeout(() => {
+      showPage('page3');
+    }, 2800);
+  }, 2100);
+
+</script>
+
+</body>
+</html>
